@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/techquest-tech/gin-shared/pkg/core"
 	"github.com/techquest-tech/gin-shared/pkg/event"
-	"github.com/techquest-tech/gin-shared/pkg/ginshared"
+	"github.com/techquest-tech/gin-shared/pkg/tracing"
 	"go.uber.org/zap"
 )
 
@@ -66,7 +66,7 @@ func (appins *ResquestMonitor) ReportError(err error) {
 	appins.logger.Debug("tracing error done", zap.Error(err))
 }
 
-func (appins *ResquestMonitor) ReportTracing(tr *ginshared.TracingDetails) {
+func (appins *ResquestMonitor) ReportTracing(tr *tracing.TracingDetails) {
 	client := appins.getClient()
 
 	client.Context().Tags.Operation().SetName(fmt.Sprintf("%s %s", tr.Method, tr.Uri))

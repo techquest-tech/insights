@@ -1,4 +1,4 @@
-module github.com/techquest-tech/appinsights
+module github.com/techquest-tech/insights
 
 go 1.19
 
