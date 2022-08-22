@@ -1,10 +1,9 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
 */
 package main
 
-import "github.com/techquest-tech/appinsights/cmd"
+import "github.com/techquest-tech/insights/cmd"
 
 func main() {
 	cmd.Execute()

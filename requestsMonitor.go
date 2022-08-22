@@ -7,30 +7,38 @@ import (
 	"github.com/asaskevich/EventBus"
 	"github.com/microsoft/ApplicationInsights-Go/appinsights"
 	"github.com/spf13/viper"
+	"github.com/techquest-tech/cronext"
 	"github.com/techquest-tech/gin-shared/pkg/core"
 	"github.com/techquest-tech/gin-shared/pkg/event"
 	"github.com/techquest-tech/gin-shared/pkg/tracing"
 	"go.uber.org/zap"
 )
 
-type ResquestMonitor struct {
-	logger  *zap.Logger
+type AppInsightsSettings struct {
 	Key     string
 	Role    string
 	Version string
+}
+
+type ResquestMonitor struct {
+	AppInsightsSettings
+	logger  *zap.Logger
 	Details bool
 }
 
 func InitRequestMonitor(logger *zap.Logger, bus EventBus.Bus) *ResquestMonitor {
-	client := &ResquestMonitor{
-		logger:  logger,
+	azureSetting := AppInsightsSettings{
 		Role:    core.AppName,
 		Version: core.Version,
 	}
+	client := &ResquestMonitor{
+		logger: logger,
+	}
 	settings := viper.Sub("tracing.azure")
 	if settings != nil {
-		settings.Unmarshal(client)
+		settings.Unmarshal(&azureSetting)
 	}
+	client.AppInsightsSettings = azureSetting
 	if keyFromenv := os.Getenv("APPINSIGHTS_INSTRUMENTATIONKEY"); keyFromenv != "" {
 		client.Key = keyFromenv
 		logger.Info("read application insights key from ENV")
@@ -43,8 +51,24 @@ func InitRequestMonitor(logger *zap.Logger, bus EventBus.Bus) *ResquestMonitor {
 
 	bus.SubscribeAsync(event.EventError, client.ReportError, false)
 	bus.SubscribeAsync(event.EventTracing, client.ReportTracing, false)
+	bus.SubscribeAsync(cronext.EventJobFinished, client.ReportScheduleJob, false)
 	logger.Info("event subscribed for application insights")
 	return client
+}
+
+func (appins *ResquestMonitor) ReportScheduleJob(req cronext.JobHistory) {
+	status := 200
+	if !req.Succeed {
+		status = 500
+	}
+
+	details := &tracing.TracingDetails{
+		Uri:     req.Job,
+		Method:  "Cron",
+		Durtion: req.Duration,
+		Status:  status,
+	}
+	appins.ReportTracing(details)
 }
 
 func (appins *ResquestMonitor) getClient() appinsights.TelemetryClient {
