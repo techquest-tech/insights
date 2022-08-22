@@ -17,13 +17,24 @@ type AvailableRequest struct {
 	Name   string
 }
 
-func InitAvailablitity(logger *zap.Logger) (*AvailablilityMonitorService, error) {
+func InitAvailability(logger *zap.Logger) (*AvailabilityMonitorService, error) {
 	settings := viper.Sub("monitor.available")
 	if settings == nil {
 		return nil, fmt.Errorf("missing config for monitor")
 	}
-	s := &AvailablilityMonitorService{}
+	s := &AvailabilityMonitorService{
+		Cron:   "@every 30s",
+		Logger: logger,
+	}
 	settings.Unmarshal(s)
+
+	settings = viper.Sub("monitor.azure")
+	azuresettings := AppInsightsSettings{}
+	if settings != nil {
+		settings.Unmarshal(&azuresettings)
+		s.AppInsightsSettings = azuresettings
+	}
+
 	if keyFromenv := os.Getenv("APPINSIGHTS_INSTRUMENTATIONKEY"); keyFromenv != "" {
 		s.Key = keyFromenv
 		logger.Info("read application insights key from ENV")
@@ -39,20 +50,20 @@ func InitAvailablitity(logger *zap.Logger) (*AvailablilityMonitorService, error)
 	return s, nil
 }
 
-type AvailablilityMonitorService struct {
-	AppInsightsSettings `json:"azure"`
-	Logger              *zap.Logger
-	Cron                string
-	Tests               []AvailableRequest
+type AvailabilityMonitorService struct {
+	AppInsightsSettings
+	Logger *zap.Logger
+	Cron   string
+	Tests  []AvailableRequest
 }
 
-func (ass *AvailablilityMonitorService) GetClient() http.Client {
+func (ass *AvailabilityMonitorService) GetClient() http.Client {
 	return http.Client{
 		Timeout: 5 * time.Second,
 	}
 }
 
-func (ass *AvailablilityMonitorService) triggerTest(req AvailableRequest) {
+func (ass *AvailabilityMonitorService) triggerTest(req AvailableRequest) {
 	start := time.Now()
 	client := ass.GetClient()
 	_, err := client.Get(req.Target)
@@ -62,14 +73,19 @@ func (ass *AvailablilityMonitorService) triggerTest(req AvailableRequest) {
 
 	msg := ""
 	if err != nil {
+		ass.Logger.Warn("target return error", zap.String("name", req.Name),
+			zap.String("target url", req.Target), zap.Error(err))
 		msg = err.Error()
+	} else {
+		ass.Logger.Info("target return OK", zap.String("name", req.Name),
+			zap.String("target url", req.Target), zap.Duration("duration", dur))
 	}
 	a9y.Message = msg
 	aclient := appinsights.NewTelemetryClient(ass.Key)
 	aclient.Track(a9y)
 }
 
-func (aas *AvailablilityMonitorService) Start() {
+func (aas *AvailabilityMonitorService) Start() {
 	schedule.CreateSchedule("availablilityMonitor", aas.Cron, func() {
 		for _, item := range aas.Tests {
 			aas.triggerTest(item)
