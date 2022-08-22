@@ -18,17 +18,15 @@ type AvailableRequest struct {
 }
 
 func InitAvailability(logger *zap.Logger) (*AvailabilityMonitorService, error) {
-	settings := viper.Sub("monitor.available")
-	if settings == nil {
-		return nil, fmt.Errorf("missing config for monitor")
-	}
 	s := &AvailabilityMonitorService{
 		Cron:   "@every 30s",
 		Logger: logger,
 	}
-	settings.Unmarshal(s)
-
-	settings = viper.Sub("monitor.azure")
+	settings := viper.Sub("tracing.available")
+	if settings != nil {
+		settings.Unmarshal(s)
+	}
+	settings = viper.Sub("tracing.azure")
 	azuresettings := AppInsightsSettings{}
 	if settings != nil {
 		settings.Unmarshal(&azuresettings)
