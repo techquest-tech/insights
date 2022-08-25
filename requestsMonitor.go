@@ -93,7 +93,7 @@ func (appins *ResquestMonitor) ReportError(err error) {
 func (appins *ResquestMonitor) ReportTracing(tr *tracing.TracingDetails) {
 	client := appins.getClient()
 
-	client.Context().Tags.Operation().SetName(fmt.Sprintf("%s %s", tr.Method, tr.Uri))
+	client.Context().Tags.Operation().SetName(fmt.Sprintf("%s %s", tr.Method, tr.Optionname))
 
 	t := appinsights.NewRequestTelemetry(
 		tr.Method, tr.Uri, tr.Durtion, fmt.Sprintf("%d", tr.Status),
