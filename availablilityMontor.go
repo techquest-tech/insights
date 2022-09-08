@@ -19,7 +19,7 @@ type AvailableRequest struct {
 
 func InitAvailability(logger *zap.Logger) (*AvailabilityMonitorService, error) {
 	s := &AvailabilityMonitorService{
-		Cron:   "@every 30s",
+		Cron:   "@every 5m",
 		Logger: logger,
 	}
 	settings := viper.Sub("tracing.available")
@@ -75,7 +75,7 @@ func (ass *AvailabilityMonitorService) triggerTest(req AvailableRequest) {
 			zap.String("target url", req.Target), zap.Error(err))
 		msg = err.Error()
 	} else {
-		ass.Logger.Info("target return OK", zap.String("name", req.Name),
+		ass.Logger.Debug("target return OK", zap.String("name", req.Name),
 			zap.String("target url", req.Target), zap.Duration("duration", dur))
 	}
 	a9y.Message = msg
