@@ -18,12 +18,12 @@ type AppInsightsSettings struct {
 	Key     string
 	Role    string
 	Version string
+	Details bool
 }
 
 type ResquestMonitor struct {
 	AppInsightsSettings
-	logger  *zap.Logger
-	Details bool
+	logger *zap.Logger
 }
 
 func InitRequestMonitor(logger *zap.Logger, bus EventBus.Bus) *ResquestMonitor {
@@ -52,7 +52,7 @@ func InitRequestMonitor(logger *zap.Logger, bus EventBus.Bus) *ResquestMonitor {
 	bus.SubscribeAsync(event.EventError, client.ReportError, false)
 	bus.SubscribeAsync(event.EventTracing, client.ReportTracing, false)
 	bus.SubscribeAsync(cronext.EventJobFinished, client.ReportScheduleJob, false)
-	logger.Info("event subscribed for application insights")
+	logger.Info("event subscribed for application insights", zap.Bool("details", client.Details))
 	return client
 }
 
