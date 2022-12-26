@@ -10,6 +10,7 @@ import (
 	"github.com/techquest-tech/cronext"
 	"github.com/techquest-tech/gin-shared/pkg/core"
 	"github.com/techquest-tech/gin-shared/pkg/event"
+	"github.com/techquest-tech/gin-shared/pkg/ginshared"
 	"github.com/techquest-tech/gin-shared/pkg/tracing"
 	"go.uber.org/zap"
 )
@@ -117,4 +118,18 @@ func (appins *ResquestMonitor) ReportTracing(tr *tracing.TracingDetails) {
 
 	client.Track(t)
 	appins.logger.Debug("submit tracing done.")
+}
+
+func Enabled() {
+	ginshared.GetContainer().Invoke(tracing.InitTracingService)
+	ginshared.ProvideController(func(logger *zap.Logger, bus EventBus.Bus) ginshared.DiController {
+		InitRequestMonitor(logger, bus)
+		return nil
+	})
+
+	ginshared.Provide(InitAvailability)
+	ginshared.GetContainer().Invoke(func(service *AvailabilityMonitorService) error {
+		service.Start()
+		return nil
+	})
 }
