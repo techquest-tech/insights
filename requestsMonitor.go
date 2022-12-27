@@ -25,6 +25,7 @@ type AppInsightsSettings struct {
 type ResquestMonitor struct {
 	AppInsightsSettings
 	logger *zap.Logger
+	client appinsights.TelemetryClient
 }
 
 func InitRequestMonitor(logger *zap.Logger, bus EventBus.Bus) *ResquestMonitor {
@@ -54,6 +55,7 @@ func InitRequestMonitor(logger *zap.Logger, bus EventBus.Bus) *ResquestMonitor {
 	bus.SubscribeAsync(event.EventTracing, client.ReportTracing, false)
 	bus.SubscribeAsync(cronext.EventJobFinished, client.ReportScheduleJob, false)
 	logger.Info("event subscribed for application insights", zap.Bool("details", client.Details))
+	client.getClient()
 	return client
 }
 
@@ -73,15 +75,17 @@ func (appins *ResquestMonitor) ReportScheduleJob(req cronext.JobHistory) {
 }
 
 func (appins *ResquestMonitor) getClient() appinsights.TelemetryClient {
-
-	client := appinsights.NewTelemetryClient(appins.Key)
-	if appins.Role != "" {
-		client.Context().Tags.Cloud().SetRole(appins.Role)
+	if appins.client == nil {
+		client := appinsights.NewTelemetryClient(appins.Key)
+		if appins.Role != "" {
+			client.Context().Tags.Cloud().SetRole(appins.Role)
+		}
+		if appins.Version != "" {
+			client.Context().Tags.Application().SetVer(appins.Version)
+		}
+		appins.client = client
 	}
-	if appins.Version != "" {
-		client.Context().Tags.Application().SetVer(appins.Version)
-	}
-	return client
+	return appins.client
 }
 
 func (appins *ResquestMonitor) ReportError(err error) {
