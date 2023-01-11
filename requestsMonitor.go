@@ -25,7 +25,7 @@ type AppInsightsSettings struct {
 type ResquestMonitor struct {
 	AppInsightsSettings
 	logger *zap.Logger
-	client appinsights.TelemetryClient
+	// client appinsights.TelemetryClient
 }
 
 func InitRequestMonitor(logger *zap.Logger, bus EventBus.Bus) *ResquestMonitor {
