@@ -45,7 +45,7 @@ func InitAvailability(logger *zap.Logger) (*AvailabilityMonitorService, error) {
 		s.Tests = make([]AvailableRequest, 1)
 		s.Tests[0] = AvailableRequest{Name: "local", Target: "http://127.0.0.1:5000/healthz"}
 	}
-	s.client = appinsights.NewTelemetryClient(s.Key)
+	// s.client = appinsights.NewTelemetryClient(s.Key)
 	return s, nil
 }
 
@@ -54,7 +54,7 @@ type AvailabilityMonitorService struct {
 	Logger *zap.Logger
 	Cron   string
 	Tests  []AvailableRequest
-	client appinsights.TelemetryClient
+	// client appinsights.TelemetryClient
 }
 
 func (ass *AvailabilityMonitorService) GetClient() http.Client {
@@ -87,8 +87,8 @@ func (ass *AvailabilityMonitorService) triggerTest(req AvailableRequest) {
 			zap.String("target url", req.Target), zap.Duration("duration", dur))
 	}
 	a9y.Message = msg
-	// aclient := appinsights.NewTelemetryClient(ass.Key)
-	ass.client.Track(a9y)
+	aclient := appinsights.NewTelemetryClient(ass.Key)
+	aclient.Track(a9y)
 }
 
 func (aas *AvailabilityMonitorService) Start() {

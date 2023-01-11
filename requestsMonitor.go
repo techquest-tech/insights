@@ -75,17 +75,18 @@ func (appins *ResquestMonitor) ReportScheduleJob(req cronext.JobHistory) {
 }
 
 func (appins *ResquestMonitor) getClient() appinsights.TelemetryClient {
-	if appins.client == nil {
-		client := appinsights.NewTelemetryClient(appins.Key)
-		if appins.Role != "" {
-			client.Context().Tags.Cloud().SetRole(appins.Role)
-		}
-		if appins.Version != "" {
-			client.Context().Tags.Application().SetVer(appins.Version)
-		}
-		appins.client = client
+	// if appins.client == nil {
+	client := appinsights.NewTelemetryClient(appins.Key)
+	if appins.Role != "" {
+		client.Context().Tags.Cloud().SetRole(appins.Role)
 	}
-	return appins.client
+	if appins.Version != "" {
+		client.Context().Tags.Application().SetVer(appins.Version)
+	}
+	// appins.client = client
+	return client
+	// }
+	// return appins.client
 }
 
 func (appins *ResquestMonitor) ReportError(err error) {
