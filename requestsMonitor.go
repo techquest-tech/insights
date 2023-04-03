@@ -126,10 +126,10 @@ func (appins *ResquestMonitor) ReportTracing(tr *tracing.TracingDetails) {
 }
 
 func EnabledMonitor() {
-	core.Provide(tracing.InitTracingService)
+	// tracing.EnabledTracing()
 	core.ProvideStartup(func(t *tracing.TracingRequestService, logger *zap.Logger, bus EventBus.Bus) core.Startup {
 		InitRequestMonitor(logger, bus)
-		return t
+		return nil
 	})
 }
 
